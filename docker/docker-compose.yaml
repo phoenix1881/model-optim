@@ -1,3 +1,4 @@
+
 services:
   init-data:
     image: python:3.11
@@ -42,23 +43,23 @@ services:
         ls /mnt/object
     restart: "no"
 
-  triton_server:
-    build:
-      context: /home/cc/model-optim
-      dockerfile: docker/Dockerfile.triton
-    container_name: triton_server
+  # triton_server:
+  #   build:
+  #     context: /home/cc/
+  #     dockerfile: docker/Dockerfile.triton
+  #   container_name: triton_server
 
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    ports:
-      - "8000:8000"  # for HTTP requests
-      - "8001:8001"  # for GRPC requests
-      - "8002:8002"  # for reporting metrics
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all
+  #             capabilities: [gpu]
+  #   ports:
+  #     - "8000:8000"  # for HTTP requests
+  #     - "8001:8001"  # for GRPC requests
+  #     - "8002:8002"  # for reporting metrics
 
   jupyter:
     image: quay.io/jupyter/minimal-notebook:latest
@@ -66,14 +67,24 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./workspace:/home/jovyan/work # mount workspace
+      - /home/cc/workspace:/home/jovyan/work
+      - /mnt/object:/mnt/object:rw
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     command: >
       bash -c "python3 -m pip install bash_kernel tritonclient[all] && 
                python3 -m bash_kernel.install && start-notebook.sh"
 
+
   flask:
     build:
-      context: /home/cc/model-optim/flask_app
+      context: /home/cc/flask_app
       dockerfile: Dockerfile
     container_name: flask
     ports:
@@ -85,7 +96,7 @@ services:
 
   fastapi_server:
     build:
-      context: /home/cc/model-optim/fastapi_pt
+      context: /home/cc/fastapi_pt
       dockerfile: Dockerfile
     container_name: fastapi_server
     deploy:
@@ -99,7 +110,8 @@ services:
       - "8000:8000"  # for HTTP requests
 
 
-
+volumes:
+  medicaleval:
 
 
 
