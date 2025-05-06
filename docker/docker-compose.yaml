@@ -84,7 +84,7 @@ services:
 
   flask:
     build:
-      context: /home/cc/flask_app
+      context: /home/cc/model-optim/flask_app
       dockerfile: Dockerfile
     container_name: flask
     ports:
@@ -96,7 +96,7 @@ services:
 
   fastapi_server:
     build:
-      context: /home/cc/fastapi_pt
+      context: /home/cc/model-optim/fastapi_pt
       dockerfile: Dockerfile
     container_name: fastapi_server
     deploy:
