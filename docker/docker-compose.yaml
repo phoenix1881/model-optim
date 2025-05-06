@@ -10,7 +10,7 @@ services:
       - |
         set -e  # Stop on error
         echo "Creating dataset directory..."
-        mkdir -p /data/medquad && cd /data/Food-11
+        mkdir -p /data/medquad && cd /data/medquad
 
         # run on node-persist
         curl https://rclone.org/install.sh | sudo bash
@@ -44,7 +44,7 @@ services:
 
   triton_server:
     build:
-      context: /home/cc/
+      context: /home/cc/model-optim
       dockerfile: docker/Dockerfile.triton
     container_name: triton_server
 
@@ -73,7 +73,7 @@ services:
 
   flask:
     build:
-      context: /home/cc/flask_app
+      context: /home/cc/model-optim/flask_app
       dockerfile: Dockerfile
     container_name: flask
     ports:
@@ -85,7 +85,7 @@ services:
 
   fastapi_server:
     build:
-      context: /home/cc/fastapi_pt
+      context: /home/cc/model-optim/fastapi_pt
       dockerfile: Dockerfile
     container_name: fastapi_server
     deploy:
