@@ -45,7 +45,7 @@ services:
 
   triton_server:
     build:
-      context: /home/cc/
+      context: /home/cc/model-optim
       dockerfile: docker/Dockerfile.triton
     container_name: triton_server
 
