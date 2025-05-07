@@ -67,7 +67,7 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - /home/cc/workspace:/home/jovyan/work
+      - /home/cc/workspace:/home/jovyan/work:rw
       - /mnt/object:/mnt/object:rw
     runtime: nvidia
     deploy:
