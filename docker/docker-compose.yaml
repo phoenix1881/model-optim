@@ -66,6 +66,8 @@ services:
     container_name: jupyter
     ports:
       - "8888:8888"
+    networks:
+      - app-network
     volumes:
       - /home/cc/workspace:/home/jovyan/work:rw
       - /mnt/object:/mnt/object:rw
@@ -87,11 +89,13 @@ services:
       context: /home/cc/model-optim/flask_app
       dockerfile: Dockerfile
     container_name: flask
+    networks:
+      - app-network
     ports:
       - "80:5000"
     environment:
       - TRITON_SERVER_URL=triton_server:8000
-      - FOOD11_MODEL_NAME=food_classifier
+      - FASTAPI_SERVER_URL=http://fastapi_server:8000
 
 
   fastapi_server:
@@ -99,6 +103,8 @@ services:
       context: /home/cc/model-optim/fastapi_pt
       dockerfile: Dockerfile
     container_name: fastapi_server
+    networks:
+      - app-network
     deploy:
       resources:
         reservations:
@@ -113,5 +119,6 @@ services:
 volumes:
   medicaleval:
 
-
+networks:
+  app-network:
 
