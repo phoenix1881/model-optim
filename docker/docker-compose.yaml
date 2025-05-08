@@ -57,7 +57,7 @@ services:
               count: all
               capabilities: [gpu]
     ports:
-      - "8000:8000"  # for HTTP requests
+      - "6000:6000"  # for HTTP requests
       - "8001:8001"  # for GRPC requests
       - "8002:8002"  # for reporting metrics
 
@@ -94,7 +94,7 @@ services:
     ports:
       - "80:5000"
     environment:
-      - TRITON_SERVER_URL=triton_server:8000
+      - TRITON_SERVER_URL=triton_server:6000
       - FASTAPI_SERVER_URL=http://fastapi_server:8000
 
 

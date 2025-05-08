@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir \
     onnxruntime-gpu
 
 # Expose Triton ports
-EXPOSE 8000 8001 8002
+EXPOSE 6000 8001 8002
 
 # Copy the model repository into the container
 COPY models /models
