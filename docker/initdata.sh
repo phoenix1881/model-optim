@@ -2,7 +2,7 @@
 set -e  # Stop script on error
 
 echo "Creating dataset directory..."
-mkdir -p /data/medquad && cd /data/medquad
+mkdir -p ~/data/medquad && cd ~/data/medquad
 
 echo "Installing rclone..."
 curl https://rclone.org/install.sh | sudo bash
@@ -30,11 +30,12 @@ rclone lsd chi_tacc: || { echo "Failed to list remote containers. Check credenti
 export RCLONE_CONTAINER=object-persist-project17
 
 echo "Mounting container to /mnt/object..."
-sudo mkdir -p /mnt/object
-sudo chown -R cc /mnt/object || true
-sudo chgrp -R cc /mnt/object || true
+sudo mkdir -p /home/cc/mnt/object
+sudo chown -R cc /home/cc/mnt/object
+sudo chgrp -R cc /home/cc/mnt/object
 
-rclone mount chi_tacc:$RCLONE_CONTAINER /mnt/object --allow-other --daemon
+rclone mount chi_tacc:$RCLONE_CONTAINER /home/cc/mnt/object --allow-other --daemon
+
 
 echo "📁 Contents of /mnt/object:"
 ls /mnt/object
