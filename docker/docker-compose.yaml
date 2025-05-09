@@ -1,13 +1,18 @@
 version: "3.8"
 services:
   init-data:
-    image: python:3.11
+    build:
+      context: /home/cc/model-optim/
+      dockerfile: Dockerfile.initdata
+    container_name: init-data
     volumes:
       - medicaleval:/data
-      - ./model-optim/docker/init.sh:/init.sh:ro
-    working_dir: /data
-    command: ["bash", "init.sh"]
+    environment:
+      - YOUR_USER_ID=your_id
+      - APP_CRED_ID=your_app_cred_id
+      - APP_CRED_SECRET=your_app_cred_secret
     restart: "no"
+
 
 
   # triton_server:
