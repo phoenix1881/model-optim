@@ -1,45 +1,40 @@
 #!/bin/bash
+set -e  # Stop script on error
 
-set -e
+echo "Creating dataset directory..."
+mkdir -p /data/medquad && cd /data/medquad
 
-# run on node-persist
+echo "Installing rclone..."
 curl https://rclone.org/install.sh | sudo bash
 
+echo "Enabling 'allow_other' in /etc/fuse.conf..."
 sudo sed -i '/^#user_allow_other/s/^#//' /etc/fuse.conf
 
+echo "Creating rclone config directory..."
 mkdir -p ~/.config/rclone
 
-echo "[chi_tacc]
+echo "Writing rclone configuration..."
+cat <<EOF > ~/.config/rclone/rclone.conf
+[chi_tacc]
 type = swift
 user_id = $YOUR_USER_ID
 application_credential_id = $APP_CRED_ID
 application_credential_secret = $APP_CRED_SECRET
 auth = https://chi.tacc.chameleoncloud.org:5000/v3
-region = CHI@TACC" > ~/.config/rclone/rclone.conf
+region = CHI@TACC
+EOF
 
-rclone lsd chi_tacc:
+echo "📂 Checking remote containers:"
+rclone lsd chi_tacc: || { echo "Failed to list remote containers. Check credentials."; exit 1; }
 
-echo "Setting RCLONE_CONTAINER..."
 export RCLONE_CONTAINER=object-persist-project17
 
-echo "Running extract stage..."
-docker compose -f ./docker-compose-etl.yaml run extract-data
-
-echo "Running transform stage..."
-docker compose -f ./docker-compose-etl.yaml run transform-data
-
-echo "Running load stage..."
-docker compose -f ./docker-compose-etl.yaml run load-data
-
-echo "Cleaning up Docker volume..."
-docker volume ls
-docker volume rm $(docker volume ls -q --filter name=medicaldata) || echo "No volume found to remove."
-
-echo "Mounting on local file system"
+echo "Mounting container to /mnt/object..."
 sudo mkdir -p /mnt/object
-sudo chown -R cc /mnt/object
-sudo chgrp -R cc /mnt/object
+sudo chown -R cc /mnt/object || true
+sudo chgrp -R cc /mnt/object || true
 
-rclone mount chi_tacc:object-persist-project17 /mnt/object --allow-other --daemon
+rclone mount chi_tacc:$RCLONE_CONTAINER /mnt/object --allow-other --daemon
 
+echo "📁 Contents of /mnt/object:"
 ls /mnt/object
