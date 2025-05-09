@@ -22,3 +22,4 @@ evaluate
 torch 
 transformers
 lime
+litgpt
