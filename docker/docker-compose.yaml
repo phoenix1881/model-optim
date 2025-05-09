@@ -1,6 +1,7 @@
 version: "3.8"
 services:
   init-data:
+    image: python:3.11
     volumes:
       - medicaleval:/data
     environment:
