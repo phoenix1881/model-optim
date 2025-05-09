@@ -62,7 +62,7 @@ services:
     volumes:
       - /mnt/object:/mnt/object:rw
     ports:
-      - "80:5000"
+      - "5000:5000"
     environment:
       - TRITON_SERVER_URL=triton_server:6000
       - FASTAPI_SERVER_URL=http://fastapi_server:8000
