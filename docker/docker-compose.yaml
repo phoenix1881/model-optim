@@ -2,7 +2,7 @@ version: "3.8"
 services:
   init-data:
     build:
-      context: /home/cc/model-optim/
+      context: /home/cc/model-optim/docker
       dockerfile: Dockerfile.initdata
     container_name: init-data
     volumes:
