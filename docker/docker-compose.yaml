@@ -3,7 +3,6 @@ services:
   init-data:
     build:
       context: /home/cc/model-optim/docker
-      dockerfile: Dockerfile.initdata
     container_name: init-data
     volumes:
       - medicaleval:/data
