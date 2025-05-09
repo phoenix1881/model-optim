@@ -6,7 +6,7 @@ services:
       - medicaleval:/data
       - ./model-optim/docker/init.sh:/init.sh:ro
     working_dir: /data
-    command: ["bash", "/init.sh"]
+    command: ["bash", "init.sh"]
     restart: "no"
 
 
