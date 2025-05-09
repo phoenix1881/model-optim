@@ -82,7 +82,7 @@ ERRORS = Counter(
 middleware = [
     Middleware(CORSMiddleware, allow_origins=["*"])
 ]
-app = FastAPI(title="Medical Chatbot", middleware=middleware)
+app = FastAPI(title="Medical Chatbo", middleware=middleware)
 
 # Expose /metrics
 app.mount("/metrics", make_asgi_app())
