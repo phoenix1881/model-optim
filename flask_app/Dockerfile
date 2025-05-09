@@ -18,4 +18,4 @@ COPY . .
 EXPOSE 5000
 
 # Command to run Flask (assumes app.py sets FLASK_APP internally or runs directly)
-CMD ["python", "app.py"]
+CMD ["python", "-u", "app.py"]
