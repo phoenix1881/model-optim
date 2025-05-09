@@ -1,19 +1,19 @@
 #!/bin/bash
-set -e  # Stop script on error
+set -e
 
 echo "Creating dataset directory..."
 mkdir -p ~/data/medquad && cd ~/data/medquad
 
 echo "Installing rclone..."
-curl https://rclone.org/install.sh | sudo bash
+curl https://rclone.org/install.sh -o install_rclone.sh
+bash install_rclone.sh
+rm install_rclone.sh
 
-echo "Enabling 'allow_other' in /etc/fuse.conf..."
+echo "Fixing FUSE config..."
 sudo sed -i '/^#user_allow_other/s/^#//' /etc/fuse.conf
 
-echo "Creating rclone config directory..."
+echo "Configuring rclone credentials..."
 mkdir -p ~/.config/rclone
-
-echo "Writing rclone configuration..."
 cat <<EOF > ~/.config/rclone/rclone.conf
 [chi_tacc]
 type = swift
@@ -24,18 +24,16 @@ auth = https://chi.tacc.chameleoncloud.org:5000/v3
 region = CHI@TACC
 EOF
 
-echo "📂 Checking remote containers:"
-rclone lsd chi_tacc: || { echo "Failed to list remote containers. Check credentials."; exit 1; }
+echo "Listing remote storage..."
+rclone lsd chi_tacc:
+
+echo "Mounting on local file system..."
+sudo mkdir -p /mnt/object
+sudo chown -R cc /mnt/object
+sudo chgrp -R cc /mnt/object
 
 export RCLONE_CONTAINER=object-persist-project17
+rclone mount chi_tacc:$RCLONE_CONTAINER /mnt/object --allow-other --daemon
 
-echo "Mounting container to /mnt/object..."
-sudo mkdir -p /home/cc/mnt/object
-sudo chown -R cc /home/cc/mnt/object
-sudo chgrp -R cc /home/cc/mnt/object
-
-rclone mount chi_tacc:$RCLONE_CONTAINER /home/cc/mnt/object --allow-other --daemon
-
-
-echo "📁 Contents of /mnt/object:"
+echo "Contents of /mnt/object:"
 ls /mnt/object
