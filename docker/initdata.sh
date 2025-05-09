@@ -1,16 +1,22 @@
 #!/bin/bash
 set -e
 
-echo "Creating dataset directory..."
-mkdir -p ~/data/medquad && cd ~/data/medquad
+# run on node-persist
+curl https://rclone.org/install.sh | sudo bash
 
-echo "Installing rclone..."
-curl https://rclone.org/install.sh -o install_rclone.sh
-bash install_rclone.sh
-rm install_rclone.sh
-
-echo "Fixing FUSE config..."
 sudo sed -i '/^#user_allow_other/s/^#//' /etc/fuse.conf
+
+mkdir -p ~/.config/rclone
+
+echo "[chi_tacc]
+type = swift
+user_id = $YOUR_USER_ID
+application_credential_id = $APP_CRED_ID
+application_credential_secret = $APP_CRED_SECRET
+auth = https://chi.tacc.chameleoncloud.org:5000/v3
+region = CHI@TACC" > ~/.config/rclone/rclone.conf
+
+rclone lsd chi_tacc:
 
 echo "Configuring rclone credentials..."
 mkdir -p ~/.config/rclone
