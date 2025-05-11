@@ -91,7 +91,7 @@ import json
 import os
 from datetime import datetime
 
-LOG_FILE = "chat_log.json"
+LOG_FILE = "/mnt/object/data/production/retraining_data_raw/online_log.json"
 
 @app.route('/ask', methods=['POST'])
 def ask():
