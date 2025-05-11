@@ -126,14 +126,15 @@ def ask():
     }
 
     if os.path.exists(LOG_FILE):
-        with open(LOG_FILE, "r+") as f:
+        with open(LOG_FILE, "r") as f:
             chat_history = json.load(f)
-            chat_history.append(entry)
-            f.seek(0)
-            json.dump(chat_history, f, indent=4)
     else:
-        with open(LOG_FILE, "w") as f:
-            json.dump([entry], f, indent=4)
+        chat_history = []
+    
+    chat_history.append(entry)
+    
+    with open(LOG_FILE, "w") as f:
+        json.dump(chat_history, f, indent=4)
 
     return jsonify({"answer": answer})
 
