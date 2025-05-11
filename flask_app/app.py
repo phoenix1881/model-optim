@@ -91,8 +91,13 @@ import json
 import os
 from datetime import datetime
 
-LOG_FILE = "/mnt/object/data/production/retraining_data_raw/online_log.json"
-#LOG_FILE = "../online_log.json"
+#LOG_FILE = "/mnt/object/data/production/retraining_data_raw/online_log.json"
+LOG_FILE = "../online_log.json"
+
+import time
+import csv
+
+PERF_LOG = "/mnt/object/data/production/retraining_data_raw/perf_log.csv"
 
 @app.route('/ask', methods=['POST'])
 def ask():
@@ -102,7 +107,6 @@ def ask():
     if not question:
         return jsonify({"error": "Question is required"}), 400
 
-    # Format prompt
     prompt = f"""Medical Report:\n{medical_context}\n\nQuestion: {question}\nAnswer:"""
     styled_prompt = PromptStyle.from_name("alpaca").apply(prompt)
 
@@ -111,9 +115,12 @@ def ask():
     model.set_kv_cache(batch_size=1)
     model.cos, model.sin = model.rope_cache(device=device)
 
+    # === Measure latency ===
+    start_time = time.time()
     with torch.no_grad():
         output = model(input_ids)
         output_ids = torch.argmax(output, dim=-1)
+    latency = time.time() - start_time
 
     decoded = tokenizer.decode(output_ids[0], skip_special_tokens=True)
     answer = decoded.replace(styled_prompt, "").strip()
@@ -130,13 +137,24 @@ def ask():
             chat_history = json.load(f)
     else:
         chat_history = []
-    
+
     chat_history.append(entry)
-    
+
     with open(LOG_FILE, "w") as f:
         json.dump(chat_history, f, indent=4)
 
+    # === Log perf data to CSV ===
+    with open(PERF_LOG, "a", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            datetime.utcnow().isoformat(),
+            round(latency * 1000, 2),
+            input_ids.shape[-1],
+            "flask"
+        ])
+
     return jsonify({"answer": answer})
+
 
 
 if __name__ == '__main__':
