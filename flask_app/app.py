@@ -57,7 +57,6 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 #     app.run(host='0.0.0.0', port=5000, debug=True)
 
 
-
 app = Flask(__name__)
 
 # === Model Config ===
@@ -75,6 +74,7 @@ print("Loading TinyLLaMA via Lit-GPT...")
 model = GPT.from_name(model_name)
 state_dict = torch.load(checkpoint_path, map_location=device)
 model.load_state_dict(state_dict, strict=False)
+model.to(device) 
 model.eval()
 
 @app.route('/')
