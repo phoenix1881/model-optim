@@ -16,7 +16,7 @@ from typing import Optional
 
 # ------------------- Config -------------------
 MODEL_NAME = "TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T"
-CHECKPOINT_PATH = "/mnt/object/artfacts/medical-qa-model/model.pth"
+CHECKPOINT_PATH = "/mnt/object/artifacts/medical-qa-model/model.pth"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # ------------------- Load Model -------------------
