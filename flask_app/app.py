@@ -64,7 +64,7 @@ app = Flask(__name__)
 model_name = "TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T"
 checkpoint_path = "/mnt/object/artifacts/medical-qa-model/model.pth"
 #checkpoint_path = "/Users/tejdeepchippa/Desktop/All/model-optim/checkpoints/TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T/lit_model.pth"
-device = torch.device("mps" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # === Load tokenizer
 tokenizer = AutoTokenizer.from_pretrained(model_name)
