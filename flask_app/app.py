@@ -1,172 +1,141 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-# from transformers import AutoModelForCausalLM, AutoTokenizer
+
+
+from flask import Flask, request, jsonify, render_template
+from transformers import AutoTokenizer
+from litgpt.lora import GPT
+from litgpt.prompts import PromptStyle
+import torch
+# from flask import Flask, request, jsonify, render_template
+from transformers import AutoModelForCausalLM, AutoTokenizer
 # import torch
-# import time
 
-# # Config
+# app = Flask(__name__)
+
+# # Load GPT-2 model
+# device = "cuda" if torch.cuda.is_available() else "cpu"
 # model_name = "gpt2"
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# # Load model/tokenizer
-# tokenizer = AutoTokenizer.from_pretrained(model_name)
 # model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
-# model.eval()
+# tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-# # FastAPI setup
-# app = FastAPI(title="Medical Chatbot")
+# @app.route('/')
+# def home():
+#     return render_template('index.html')
 
-# class PromptRequest(BaseModel):
-#     symptoms: str
-#     question: str
+# medical_context = """
+# Right middle lobe opacity with loss of the right heart border.
+# Left lower lobe opacity with loss of the left heart border.
+# No pleural effusion or pneumothorax.
+# """
 
-# @app.post("/ask")
-# def ask(request: PromptRequest):
-#     if not request.symptoms or not request.question:
-#         raise HTTPException(status_code=400, detail="Both symptoms and question are required.")
+# @app.route('/ask', methods=['POST'])
+# def ask():
+#     data = request.json
+#     question = data.get('question', '')
 
-#     prompt = f"Symptoms: {request.symptoms}\nQuestion: {request.question}\nAnswer:"
+#     if not question:
+#         return jsonify({"error": "Question is required"}), 400
+
+#     # Add context from medical report
+#     prompt = f"""Medical Report:\n{medical_context}\n\nQuestion: {question}\nAnswer:"""
+
 #     input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
 
-#     start = time.time()
 #     output_ids = model.generate(
 #         input_ids,
-#         max_length=100,
+#         max_length=150,
 #         temperature=0.7,
 #         top_p=0.9,
 #         repetition_penalty=1.2
 #     )
-#     latency = time.time() - start
 
 #     answer = tokenizer.decode(output_ids[0], skip_special_tokens=True)
-#     return {
-#         "answer": answer.replace(prompt, "").strip(),
-#         "latency_sec": latency,
-#         "device": device.type
-#     }
-
-from fastapi import FastAPI, HTTPException, Request
-from pydantic import BaseModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from prometheus_client import Histogram, Counter, make_asgi_app
-from starlette.middleware import Middleware
-from starlette.middleware.cors import CORSMiddleware
-import torch, time, os
-from typing import Optional  
-import time, json, asyncio, aiofiles, httpx
-from fastapi import FastAPI, Request, Response
-import json, time, asyncio, aiofiles           
+#     return jsonify({"answer": answer.replace(prompt, '').strip()})
 
 
-# ---------------- Config ----------------
-MODEL_NAME  = os.getenv("MODEL_NAME", "gpt2")
-DEVICE      = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# if __name__ == '__main__':
+#     app.run(host='0.0.0.0', port=5000, debug=True)
 
-# ---------------- Model -----------------
-tok   = AutoTokenizer.from_pretrained(MODEL_NAME)
-model = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to(DEVICE).eval()
 
-# ---------------- Prometheus metrics ----
-LATENCY = Histogram(
-    "chatbot_latency_seconds",
-    "Request latency",
-    ["endpoint", "slice"]
-)
-ERRORS = Counter(
-    "chatbot_errors_total",
-    "Count of errors",
-    ["endpoint", "slice"]
-)
 
-# ---------------- FastAPI setup ---------
-middleware = [
-    Middleware(CORSMiddleware, allow_origins=["*"])
-]
-app = FastAPI(title="Medical Chatbo", middleware=middleware)
+app = Flask(__name__)
 
-# Expose /metrics
-app.mount("/metrics", make_asgi_app())
+# === Model Config ===
+model_name = "TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T"
+#checkpoint_path = "/mnt/object/artfacts/medical-qa-model/model.pth"
+checkpoint_path = "/Users/tejdeepchippa/Desktop/All/model-optim/checkpoints/TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T/lit_model.pth"
+device = torch.device("mps" if torch.cuda.is_available() else "cpu")
 
-class PromptRequest(BaseModel):
-    symptoms: str
-    question: str
-    slice: Optional[str] = "unspecified"   # optional slice label
+# === Load tokenizer
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer.pad_token = tokenizer.eos_token
 
-def generate_answer(prompt: str) -> str:
-    ids = tok(prompt, return_tensors="pt").input_ids.to(DEVICE)
-    out = model.generate(ids, max_length=100, temperature=0.7,
-                         top_p=0.9, repetition_penalty=1.2)
-    return tok.decode(out[0], skip_special_tokens=True)
+# === Load model from checkpoint
+print("Loading TinyLLaMA via Lit-GPT...")
+model = GPT.from_name(model_name)
+state_dict = torch.load(checkpoint_path, map_location=device)
+model.load_state_dict(state_dict, strict=False)
+model.eval()
 
-# -------------- Endpoint ---------------
-@app.post("/api/v1/answer")
-async def ask(req: PromptRequest, raw_request: Request):
-    slice_name = req.slice or "unspecified"
-    endpoint   = "/answer"
+@app.route('/')
+def home():
+    return render_template('index.html')
 
-    if not req.symptoms or not req.question:
-        ERRORS.labels(endpoint, slice_name).inc()
-        raise HTTPException(400, "symptoms and question required")
+medical_context = """
+Right middle lobe opacity with loss of the right heart border.
+Left lower lobe opacity with loss of the left heart border.
+No pleural effusion or pneumothorax.
+"""
 
-    prompt = f"Symptoms: {req.symptoms}\nQuestion: {req.question}\nAnswer:"
+import json
+import os
+from datetime import datetime
 
-    t0 = time.perf_counter()
-    try:
-        answer = generate_answer(prompt).replace(prompt, "").strip()
-    except Exception as e:
-        ERRORS.labels(endpoint, slice_name).inc()
-        raise HTTPException(500, str(e)) from e
-    finally:
-        LATENCY.labels(endpoint, slice_name).observe(time.perf_counter() - t0)
+LOG_FILE = "chat_log.json"
 
-    return {
-        "answer": answer,
-        "device": DEVICE.type
+@app.route('/ask', methods=['POST'])
+def ask():
+    data = request.json
+    question = data.get('question', '')
+
+    if not question:
+        return jsonify({"error": "Question is required"}), 400
+
+    # Format prompt
+    prompt = f"""Medical Report:\n{medical_context}\n\nQuestion: {question}\nAnswer:"""
+    styled_prompt = PromptStyle.from_name("alpaca").apply(prompt)
+
+    input_ids = tokenizer(styled_prompt, return_tensors="pt").input_ids.to(device)
+    model.max_seq_length = input_ids.shape[-1]
+    model.set_kv_cache(batch_size=1)
+    model.cos, model.sin = model.rope_cache(device=device)
+
+    with torch.no_grad():
+        output = model(input_ids)
+        output_ids = torch.argmax(output, dim=-1)
+
+    decoded = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+    answer = decoded.replace(styled_prompt, "").strip()
+
+    # === Log to JSON ===
+    entry = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "question": question,
+        "answer": answer
     }
 
-# ... (keep all your imports) ...
-import json, time, asyncio, aiofiles           # <- new
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r+") as f:
+            chat_history = json.load(f)
+            chat_history.append(entry)
+            f.seek(0)
+            json.dump(chat_history, f, indent=4)
+    else:
+        with open(LOG_FILE, "w") as f:
+            json.dump([entry], f, indent=4)
 
-LOG_PATH = "../../../online_log.jsonl"                  # one file forever
-
-# unchanged: LATENCY, ERRORS, PromptRequest, etc.
-
-@app.post("/api/v1/answer")
-async def ask(req: PromptRequest, raw_request: Request):
-    slice_name = req.slice or "unspecified"
-    endpoint   = "/answer"
-
-    if not req.symptoms or not req.question:
-        ERRORS.labels(endpoint, slice_name).inc()
-        raise HTTPException(400, "symptoms and question required")
-
-    prompt = f"Symptoms: {req.symptoms}\nQuestion: {req.question}\nAnswer:"
-
-    t0 = time.perf_counter()
-    try:
-        answer = generate_answer(prompt).replace(prompt, "").strip()
-    except Exception as e:
-        ERRORS.labels(endpoint, slice_name).inc()
-        raise HTTPException(500, str(e)) from e
-    finally:
-        LATENCY.labels(endpoint, slice_name).observe(time.perf_counter() - t0)
-
-    # ------------ append JSON to log (non-blocking) --------------------
-    record = {
-        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "symptoms": req.symptoms,
-        "question": req.question,
-        "slice": slice_name,
-        "answer": answer,
-        "latency_ms": round((time.perf_counter() - t0) * 1000, 1)
-    }
-    asyncio.create_task(write_jsonl(LOG_PATH, record))
-
-    return {"answer": answer, "device": DEVICE.type}
+    return jsonify({"answer": answer})
 
 
-# ---------- helper: async append ---------------------------------------
-async def write_jsonl(path: str, obj: dict):
-    async with aiofiles.open(path, "a") as f:
-        await f.write(json.dumps(obj, ensure_ascii=False) + "\n")
-
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
