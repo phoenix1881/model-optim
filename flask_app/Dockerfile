@@ -25,4 +25,4 @@ RUN mkdir -p /mnt/object/data/production/retraining_data_raw && \
 EXPOSE 5000
 
 # Command to run Flask (assumes app.py sets FLASK_APP internally or runs directly)
-CMD ["python", "-u", "app.py"]
+CMD ["python", "-u", "filter_app.py"]
