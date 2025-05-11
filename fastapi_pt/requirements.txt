@@ -22,6 +22,7 @@ evaluate
 torch 
 transformers
 lime
+litgpt
 
 # --- added for logging / async I/O / core metrics ----------
 prometheus-client           # Histogram / Counter / /metrics endpoint
