@@ -6,6 +6,7 @@ from litgpt.lora import GPT
 from litgpt.prompts import PromptStyle
 import torch, os, json, time, csv
 from datetime import datetime
+import shutil
 
 app = Flask(__name__)
 
@@ -37,6 +38,7 @@ ANSWER_LABELS = {
 # ---------- Files for logs ---------------------------------------------
 LOG_FILE  = "/home/cc/workspace/online_log.json"                 # append-only JSONL
 PERF_LOG  = "/mnt/object/data/production/retraining_data_raw/perf_log.csv"
+OBJ_FILE = "/mnt/object/data/production/retraining_data_raw/"
 
 # ---------- Helper ------------------------------------------------------
 def append_jsonl(path: str, obj: dict):
@@ -124,8 +126,11 @@ def ask():
     }
     append_jsonl(LOG_FILE, record)
 
+    shutil.copy(LOG_FILE, OBJ_FILE)
+
     with open(PERF_LOG, "a", newline="") as f:
         csv.writer(f).writerow([record["ts"], record["lat_ms"], ids.shape[-1], "flask"])
+        
 
     return jsonify({"answer": answer})
 
