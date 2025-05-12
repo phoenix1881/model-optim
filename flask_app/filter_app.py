@@ -35,7 +35,7 @@ ANSWER_LABELS = {
 }
 
 # ---------- Files for logs ---------------------------------------------
-LOG_FILE  = "/usr/src/online_log.jsonl"                 # append-only JSONL
+LOG_FILE  = "/home/cc/online_log.jsonl"                 # append-only JSONL
 PERF_LOG  = "/mnt/object/data/production/retraining_data_raw/perf_log.csv"
 
 # ---------- Helper ------------------------------------------------------
