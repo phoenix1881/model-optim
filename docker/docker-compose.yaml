@@ -61,6 +61,7 @@ services:
       - app-network
     volumes:
       - /mnt/object:/mnt/object:rw
+      - /home/cc:/home/cc:rw
     user: root
     ports:
       - "5000:5000"
